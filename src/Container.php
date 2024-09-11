@@ -78,6 +78,10 @@ final class Container implements ContainerInterface
                 }
 
                 $className = $classNameOrClassConfig['class'];
+
+                if (!is_string($className)) {
+                    return false;
+                }
             } else { // Component define error
                 return false;
             }
@@ -120,6 +124,10 @@ final class Container implements ContainerInterface
             }
 
             $className = $classNameOrClassConfig['class'];
+
+            if (!is_string($className)) {
+                throw new NotFoundException(sprintf("Class name must be a string in component '%s'!", $id), 500);
+            }
 
             $config = $classNameOrClassConfig;
         } else { // Component define error
