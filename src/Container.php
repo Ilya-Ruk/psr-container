@@ -15,6 +15,8 @@ final class Container implements ContainerInterface
 {
     private array $instances = [];
 
+    private array $building = [];
+
     private static array $mapType = [
         'bool' => 'boolean',
         'int' => 'integer',
@@ -131,6 +133,19 @@ final class Container implements ContainerInterface
             throw new NotFoundException(sprintf("Component '%s' define error!", $id), 500);
         }
 
+        if (isset($this->building[$className])) {
+            throw new ContainerException(
+                sprintf(
+                    "Circular reference when instantiating class '%s' ('%s')!",
+                    $className,
+                    implode("', '", array_keys($this->building))
+                ),
+                500
+            );
+        }
+
+        $this->building[$className] = 1;
+
         try {
             $reflectionClass = new ReflectionClass($className);
         } catch (ReflectionException $e) {
@@ -157,6 +172,8 @@ final class Container implements ContainerInterface
             $newClass = new $className(...$resolveConstructParams);
         } catch (Throwable $e) {
             throw new ContainerException(sprintf("Instantiate class '%s' error!", $className), 500, $e);
+        } finally {
+            unset($this->building[$className]);
         }
 
         foreach ($config as $name => $value) {
