@@ -109,11 +109,7 @@ final class Container implements ContainerInterface
      */
     private function createObject(string $id): mixed
     {
-        if (!array_key_exists($id, $this->config)) {
-            throw new NotFoundException(sprintf("Component '%s' not defined!", $id), 500);
-        }
-
-        $classNameOrClassConfig = $this->config[$id];
+        $classNameOrClassConfig = $this->config[$id] ?? $id;
 
         if (is_string($classNameOrClassConfig)) { // Class name
             $className = $classNameOrClassConfig;
@@ -274,6 +270,8 @@ final class Container implements ContainerInterface
                 $resolveMethodParams[$parameterName] = $resolveValue;
             } elseif (is_string($parameterType) && $this->hasInternal($parameterType, false)) {
                 $resolveMethodParams[$parameterName] = $this->get($parameterType);
+            } elseif (is_string($parameterType) && class_exists($parameterType)) {
+                $resolveMethodParams[$parameterName] = new $parameterType();
             } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
                 $resolveMethodParams[$parameterName] = $parameter->getDefaultValue();
             } else {
@@ -305,6 +303,10 @@ final class Container implements ContainerInterface
     {
         if (is_string($value) && $this->hasInternal($value, false)) {
             return $this->get($value);
+        }
+
+        if (is_string($value) && class_exists($value)) {
+            return new $value();
         }
 
         if ($value instanceof Closure) {
