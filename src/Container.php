@@ -161,6 +161,16 @@ final class Container implements ContainerInterface
         if ($reflectionClass->getConstructor() !== null) {
             $constructorParams = $config['__construct()'] ?? [];
 
+            if (!is_array($constructorParams)) {
+                throw new ContainerException(
+                    sprintf(
+                        "Constructor params must be an array in config of class '%s'!",
+                        $className
+                    ),
+                    500
+                );
+            }
+
             $resolveConstructParams = $this->resolveMethodParams(
                 $reflectionClass,
                 $reflectionClass->getConstructor(),
@@ -177,6 +187,16 @@ final class Container implements ContainerInterface
         }
 
         foreach ($config as $name => $value) {
+            if (!is_string($name)) {
+                throw new ContainerException(
+                    sprintf(
+                        "Property name or method name must be a string in config of class '%s'!",
+                        $className
+                    ),
+                    500
+                );
+            }
+
             if ($name === 'class' || $name == '__construct()') {
                 continue;
             }
@@ -220,10 +240,22 @@ final class Container implements ContainerInterface
                 $methodName = substr($name, 0, -2);
 
                 if ($reflectionClass->hasMethod($methodName) && $reflectionClass->getMethod($methodName)->isPublic()) {
+                    $methodParams = $value;
+
+                    if (!is_array($methodParams)) {
+                        throw new ContainerException(
+                            sprintf(
+                                "Method params must be an array in config of class '%s'!",
+                                $className
+                            ),
+                            500
+                        );
+                    }
+
                     $resolveMethodParams = $this->resolveMethodParams(
                         $reflectionClass,
                         $reflectionClass->getMethod($methodName),
-                        $value
+                        $methodParams
                     );
 
                     try {
