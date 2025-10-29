@@ -148,26 +148,19 @@ final class Container implements ContainerInterface
         $resolveConstructParams = [];
 
         if ($reflectionClass->getConstructor() !== null) {
-            $configParams = (array)($config['__construct()'] ?? []);
+            $constructorParams = $config['__construct()'] ?? [];
 
             $resolveConstructParams = $this->resolveMethodParams(
                 $reflectionClass,
                 $reflectionClass->getConstructor(),
-                $configParams
+                $constructorParams
             );
         }
 
         try {
             $newClass = new $className(...$resolveConstructParams);
         } catch (Throwable $e) {
-            throw new ContainerException(
-                sprintf(
-                    "Instantiate class '%s' error!",
-                    $className
-                ),
-                500,
-                $e
-            );
+            throw new ContainerException(sprintf("Instantiate class '%s' error!", $className), 500, $e);
         }
 
         foreach ($config as $name => $value) {
@@ -214,12 +207,10 @@ final class Container implements ContainerInterface
                 $methodName = substr($name, 0, -2);
 
                 if ($reflectionClass->hasMethod($methodName) && $reflectionClass->getMethod($methodName)->isPublic()) {
-                    $configParams = (array)$value;
-
                     $resolveMethodParams = $this->resolveMethodParams(
                         $reflectionClass,
                         $reflectionClass->getMethod($methodName),
-                        $configParams
+                        $value
                     );
 
                     try {
@@ -246,14 +237,7 @@ final class Container implements ContainerInterface
                     );
                 }
             } else {
-                throw new ContainerException(
-                    sprintf(
-                        "Unknown param '%s' in component '%s'!",
-                        $name,
-                        $id
-                    ),
-                    500
-                );
+                throw new ContainerException(sprintf("Unknown param '%s' in component '%s'!", $name, $id), 500);
             }
         }
 
@@ -263,7 +247,7 @@ final class Container implements ContainerInterface
     /**
      * @param ReflectionClass $reflectionClass
      * @param ReflectionMethod $reflectionMethod
-     * @param array $configParams
+     * @param array $methodParams
      * @return array
      * @throws NotFoundException
      * @throws ContainerException
@@ -271,7 +255,7 @@ final class Container implements ContainerInterface
     private function resolveMethodParams(
         ReflectionClass $reflectionClass,
         ReflectionMethod $reflectionMethod,
-        array $configParams
+        array $methodParams
     ): array {
         $i = 0;
         $resolveMethodParams = [];
@@ -280,17 +264,19 @@ final class Container implements ContainerInterface
             $parameterName = $parameter->getName();
             $parameterType = $parameter->getType()?->getName();
 
-            if (is_string($parameterType) && $this->hasInternal($parameterType, false)) {
-                $resolveMethodParams[$parameterName] = $this->get($parameterType);
-            } elseif (isset($configParams[$i])) {
-                $resolveValue = $this->resolveParam($configParams[$i]);
+            if (isset($methodParams[$i])) {
+                $resolveValue = $this->resolveParam($methodParams[$i]);
 
                 if ($this->strictMode && $parameterType !== null) {
                     $this->checkParameterType($reflectionClass, $reflectionMethod, $parameterName, $parameterType, $resolveValue);
                 }
 
                 $resolveMethodParams[$parameterName] = $resolveValue;
-            } elseif (!$parameter->isOptional()) {
+            } elseif (is_string($parameterType) && $this->hasInternal($parameterType, false)) {
+                $resolveMethodParams[$parameterName] = $this->get($parameterType);
+            } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
+                $resolveMethodParams[$parameterName] = $parameter->getDefaultValue();
+            } else {
                 throw new ContainerException(
                     sprintf(
                         "Method '%s' in class '%s' required param '%s' (%s)!",
@@ -322,7 +308,7 @@ final class Container implements ContainerInterface
         }
 
         if ($value instanceof Closure) {
-            return $value();
+            return $value($this);
         }
 
         return $value;
