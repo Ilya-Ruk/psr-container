@@ -7,6 +7,7 @@ namespace Rukavishnikov\Psr\Container;
 use Closure;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
 use Throwable;
 
@@ -86,11 +87,11 @@ final class Container implements ContainerInterface
                 return false;
             }
 
-            if (!class_exists($className)) {
+            try {
+                $reflectionClass = new ReflectionClass($className);
+            } catch (ReflectionException) {
                 return false;
             }
-
-            $reflectionClass = new ReflectionClass($className);
 
             if (!$reflectionClass->isInstantiable()) {
                 return false;
@@ -134,11 +135,11 @@ final class Container implements ContainerInterface
             throw new NotFoundException(sprintf("Component '%s' define error!", $id), 500);
         }
 
-        if (!class_exists($className)) {
-            throw new NotFoundException(sprintf("Class '%s' not found!", $className), 500);
+        try {
+            $reflectionClass = new ReflectionClass($className);
+        } catch (ReflectionException $e) {
+            throw new NotFoundException(sprintf("Class '%s' not found!", $className), 500, $e);
         }
-
-        $reflectionClass = new ReflectionClass($className);
 
         if (!$reflectionClass->isInstantiable()) {
             throw new NotFoundException(sprintf("Class '%s' not instantiable!", $className), 500);
