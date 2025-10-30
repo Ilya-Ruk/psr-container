@@ -54,53 +54,19 @@ final class Container implements ContainerInterface
      */
     public function has(string $id): bool
     {
-        return $this->hasInternal($id, $this->strictMode);
-    }
-
-    /**
-     * @param string $id
-     * @param bool $strictMode
-     * @return bool
-     */
-    private function hasInternal(string $id, bool $strictMode): bool
-    {
         if (array_key_exists($id, $this->instances)) {
             return true;
         }
 
-        $present = array_key_exists($id, $this->config);
-
-        if ($present && $strictMode) {
-            $classNameOrClassConfig = $this->config[$id];
-
-            if (is_string($classNameOrClassConfig)) { // Class name
-                $className = $classNameOrClassConfig;
-            } elseif (is_array($classNameOrClassConfig)) { // Class config array
-                if (!array_key_exists('class', $classNameOrClassConfig)) {
-                    return false;
-                }
-
-                $className = $classNameOrClassConfig['class'];
-
-                if (!is_string($className)) {
-                    return false;
-                }
-            } else { // Component define error
-                return false;
-            }
-
-            try {
-                $reflectionClass = new ReflectionClass($className);
-            } catch (ReflectionException) {
-                return false;
-            }
-
-            if (!$reflectionClass->isInstantiable()) {
-                return false;
-            }
+        if (array_key_exists($id, $this->config)) {
+            return true;
         }
 
-        return $present;
+        if (class_exists($id)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -119,18 +85,18 @@ final class Container implements ContainerInterface
             $config = [];
         } elseif (is_array($classNameOrClassConfig)) { // Class config array
             if (!array_key_exists('class', $classNameOrClassConfig)) {
-                throw new NotFoundException(sprintf("Class not defined in component '%s'!", $id), 500);
+                throw new ContainerException(sprintf("Class not defined in component '%s'!", $id), 500);
             }
 
             $className = $classNameOrClassConfig['class'];
 
             if (!is_string($className)) {
-                throw new NotFoundException(sprintf("Class name must be a string in component '%s'!", $id), 500);
+                throw new ContainerException(sprintf("Class name must be a string in component '%s'!", $id), 500);
             }
 
             $config = $classNameOrClassConfig;
         } else { // Component define error
-            throw new NotFoundException(sprintf("Component '%s' define error!", $id), 500);
+            throw new ContainerException(sprintf("Component '%s' define error!", $id), 500);
         }
 
         if (isset($this->building[$className])) {
@@ -153,7 +119,7 @@ final class Container implements ContainerInterface
         }
 
         if (!$reflectionClass->isInstantiable()) {
-            throw new NotFoundException(sprintf("Class '%s' not instantiable!", $className), 500);
+            throw new ContainerException(sprintf("Class '%s' not instantiable!", $className), 500);
         }
 
         $resolveConstructParams = [];
@@ -207,7 +173,7 @@ final class Container implements ContainerInterface
                 if ($reflectionClass->hasProperty($propertyName) && $reflectionClass->getProperty($propertyName)->isPublic()) {
                     $propertyType = $reflectionClass->getProperty($propertyName)->getType()?->getName();
 
-                    $resolveValue = $this->resolveParam($value);
+                    $resolveValue = $this->resolveValue($value);
 
                     if ($this->strictMode && $propertyType !== null) {
                         $this->checkPropertyType($reflectionClass, $propertyName, $propertyType, $resolveValue);
@@ -310,17 +276,15 @@ final class Container implements ContainerInterface
             $parameterType = $parameter->getType()?->getName();
 
             if (isset($methodParams[$i])) {
-                $resolveValue = $this->resolveParam($methodParams[$i]);
+                $resolveValue = $this->resolveValue($methodParams[$i]);
 
                 if ($this->strictMode && $parameterType !== null) {
                     $this->checkParameterType($reflectionClass, $reflectionMethod, $parameterName, $parameterType, $resolveValue);
                 }
 
                 $resolveMethodParams[$parameterName] = $resolveValue;
-            } elseif (is_string($parameterType) && $this->hasInternal($parameterType, false)) {
+            } elseif (is_string($parameterType) && $this->has($parameterType)) {
                 $resolveMethodParams[$parameterName] = $this->get($parameterType);
-            } elseif (is_string($parameterType) && class_exists($parameterType)) {
-                $resolveMethodParams[$parameterName] = new $parameterType();
             } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
                 $resolveMethodParams[$parameterName] = $parameter->getDefaultValue();
             } else {
@@ -348,14 +312,10 @@ final class Container implements ContainerInterface
      * @throws NotFoundException
      * @throws ContainerException
      */
-    private function resolveParam(mixed $value): mixed
+    private function resolveValue(mixed $value): mixed
     {
-        if (is_string($value) && $this->hasInternal($value, false)) {
+        if (is_string($value) && $this->has($value)) {
             return $this->get($value);
-        }
-
-        if (is_string($value) && class_exists($value)) {
-            return new $value();
         }
 
         if ($value instanceof Closure) {
