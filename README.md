@@ -1,0 +1,93 @@
+# Dependency Injection (DI) container compatible with PSR-11
+
+## Features
+
+- [PSR-11](https://www.php-fig.org/psr/psr-11/) compatible
+- Supports constructor injection, property injection and method injection
+- Accepts array definitions
+- Supports Closure
+- Detect circular references
+- Property type checking (default disable)
+- Method parameter type checking (default disable)
+- Auto-wiring
+
+## Requirements
+
+- PHP 8.0 or higher
+- PSR container 2.x
+
+## Installation
+
+```
+composer require rukavishnikov/psr-container
+```
+
+## Using the container
+
+### index.php
+
+```
+$config = require 'config.php'; // See below
+
+$container = new Container($config, true); // With Property type checking and Method parameter type checking
+//$container = new Container($config/*, false*/); // Without Property type checking and Method parameter type checking
+
+if ($container->has('InterfaceOrClass')) {
+    $instance = $container->get('InterfaceOrClass');
+}
+```
+
+### config.php
+
+```
+return [
+    ServerRequestInterface::class => ServerRequest::class, // Simple definition
+    RouterInterface::class => [ // Full definition
+        'class' => Router::class, // Required
+        '__construct()' => [ // Constructor parameters (if required)
+            [
+                '/test' => TestController::class,
+            ],
+        ],
+    ],
+    TestController::class => [ // Full definition
+        'class' => TestController::class, // Required
+        '__construct()' => [ // Constructor parameters (if required)
+            true, // Bool
+            123, // Int
+            5.0, // Float
+            'qwerty', // String
+            [1, 2, 3], // Array
+            StdClass::class, // Class
+            new DateTime(), // Instance
+            fn () => function (Container $container) {
+                return $container->get(StdClass::class);
+            }, // Closure
+        ],
+        '$public_a' => true, // Bool
+        '$public_b' => 123, // Int
+        '$public_c' => 5.0, // Float
+        '$public_d' => 'qwerty', // String
+        '$public_e' => [1, 2, 3], // Array
+        '$public_f' => StdClass::class, // Class
+        '$public_g' => new DateTime(), // Instance
+        '$public_h' => fn () => function (Container $container) {
+            return $container->get(StdClass::class);
+        }, // Closure
+        'setA()' => [true], // Bool
+        'setB()' => [123], // Int
+        'setC()' => [5.0], // Float
+        'setD()' => ['qwerty'], // String
+        'setE()' => [[1, 2, 3]], // Array
+        'setF()' => [StdClass::class], // Class
+        'setG()' => [new DateTime()], // Instance
+        'setH()' => [
+            fn () => function (Container $container) {
+                return $container->get(StdClass::class);
+            }
+        ], // Closure
+    ],
+    ResponseInterface::class => Response::class, // Simple definition
+    EmitterInterface::class => Emitter::class, // Simple definition
+];
+```
