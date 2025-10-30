@@ -26,7 +26,7 @@ composer require rukavishnikov/psr-container
 
 ### index.php
 
-```
+```php
 $config = require 'config.php'; // See below
 
 $container = new Container($config, true); // With Property type checking and Method parameter type checking
@@ -39,7 +39,7 @@ if ($container->has('InterfaceOrClass')) {
 
 ### config.php
 
-```
+```php
 return [
     ServerRequestInterface::class => ServerRequest::class, // Simple definition
     RouterInterface::class => [ // Full definition
