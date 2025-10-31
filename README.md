@@ -6,7 +6,7 @@
 - Supports constructor injection, property injection and method injection
 - Accepts array definitions
 - Supports Closure
-- Detect circular references
+- Detects circular references
 - Property type checking (default disable)
 - Method parameter type checking (default disable)
 - Auto-wiring
@@ -91,3 +91,7 @@ return [
     EmitterInterface::class => Emitter::class, // Simple definition
 ];
 ```
+
+## Strict mode
+
+For use strict mode to property type checking and method parameter type checking you can enable it on container create (second param). Default value is false.
