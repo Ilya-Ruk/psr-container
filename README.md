@@ -27,10 +27,10 @@ composer require rukavishnikov/psr-container
 ### index.php
 
 ```php
-$config = require 'config.php'; // See below
+$config = require 'config.php'; // Load config for container (see below)
 
-$container = new Container($config, true); // With Property type checking and Method parameter type checking
-//$container = new Container($config/*, false*/); // Without Property type checking and Method parameter type checking
+$container = new Container($config); // Default used
+//$container = new Container($config, true); // Strict mode used (see below)
 
 if ($container->has('InterfaceOrClass')) {
     $instance = $container->get('InterfaceOrClass');
