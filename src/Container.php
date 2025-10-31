@@ -14,10 +14,16 @@ use Throwable;
 
 final class Container implements ContainerInterface
 {
+    /**
+     * @psalm-var array<string, mixed>
+     */
     private array $instances = [];
 
     private array $building = [];
 
+    /**
+     * @psalm-var array<string, string>
+     */
     private static array $mapType = [
         'bool' => 'boolean',
         'int' => 'integer',
@@ -27,11 +33,17 @@ final class Container implements ContainerInterface
     /**
      * @param array $config
      * @param bool $strictMode
+     * @throws ContainerException
      */
     public function __construct(
         private array $config,
         private bool $strictMode = false
     ) {
+        foreach ($this->config as $key => $value) {
+            if (!is_string($key)) {
+                throw new ContainerException("Key must be a string in container config!", 500);
+            }
+        }
     }
 
     /**
@@ -81,6 +93,7 @@ final class Container implements ContainerInterface
         $classNameOrClassConfig = $this->config[$id] ?? $id;
 
         if (is_string($classNameOrClassConfig)) { // Class name
+            /** @psalm-var class-string $className */
             $className = $classNameOrClassConfig;
 
             $config = [];
@@ -89,11 +102,12 @@ final class Container implements ContainerInterface
                 throw new ContainerException(sprintf("Class not defined in component '%s'!", $id), 500);
             }
 
-            $className = $classNameOrClassConfig['class'];
-
-            if (!is_string($className)) {
+            if (!is_string($classNameOrClassConfig['class'])) {
                 throw new ContainerException(sprintf("Class name must be a string in component '%s'!", $id), 500);
             }
+
+            /** @psalm-var class-string $className */
+            $className = $classNameOrClassConfig['class'];
 
             $config = $classNameOrClassConfig;
         } else { // Component define error
@@ -146,8 +160,8 @@ final class Container implements ContainerInterface
         }
 
         try {
-            $newClass = new $className(...$resolveConstructParams);
-        } catch (Throwable $e) {
+            $newClass = $reflectionClass->newInstanceArgs($resolveConstructParams);
+        } catch (ReflectionException $e) {
             throw new ContainerException(sprintf("Instantiate class '%s' error!", $className), 500, $e);
         } finally {
             unset($this->building[$className]);
@@ -250,6 +264,7 @@ final class Container implements ContainerInterface
                     );
 
                     try {
+                        /** @psalm-suppress MixedMethodCall */
                         $newClass->$methodName(...$resolveMethodParams);
                     } catch (Throwable $e) {
                         throw new ContainerException(
