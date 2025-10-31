@@ -137,7 +137,7 @@ final class Container implements ContainerInterface
             throw new ContainerException(sprintf("Class '%s' not instantiable!", $className), 500);
         }
 
-        $resolveConstructParams = [];
+        $resolveConstructorParams = [];
 
         if ($reflectionClass->getConstructor() !== null) {
             $constructorParams = $config['__construct()'] ?? [];
@@ -152,7 +152,7 @@ final class Container implements ContainerInterface
                 );
             }
 
-            $resolveConstructParams = $this->resolveMethodParams(
+            $resolveConstructorParams = $this->resolveMethodParams(
                 $reflectionClass,
                 $reflectionClass->getConstructor(),
                 $constructorParams
@@ -160,7 +160,7 @@ final class Container implements ContainerInterface
         }
 
         try {
-            $newClass = $reflectionClass->newInstanceArgs($resolveConstructParams);
+            $newClass = $reflectionClass->newInstanceArgs($resolveConstructorParams);
         } catch (ReflectionException $e) {
             throw new ContainerException(sprintf("Instantiate class '%s' error!", $className), 500, $e);
         } finally {
@@ -168,6 +168,10 @@ final class Container implements ContainerInterface
         }
 
         foreach ($config as $name => $value) {
+            if ($name === 'class' || $name === '__construct()') {
+                continue;
+            }
+
             if (!is_string($name)) {
                 throw new ContainerException(
                     sprintf(
@@ -176,10 +180,6 @@ final class Container implements ContainerInterface
                     ),
                     500
                 );
-            }
-
-            if ($name === 'class' || $name == '__construct()') {
-                continue;
             }
 
             if (str_starts_with($name, '$')) {
@@ -288,7 +288,14 @@ final class Container implements ContainerInterface
                     );
                 }
             } else {
-                throw new ContainerException(sprintf("Unknown param '%s' in component '%s'!", $name, $id), 500);
+                throw new ContainerException(
+                    sprintf(
+                        "Unknown param '%s' in config of class '%s'!",
+                        $name,
+                        $className
+                    ),
+                    500
+                );
             }
         }
 
@@ -360,7 +367,7 @@ final class Container implements ContainerInterface
             } else {
                 throw new ContainerException(
                     sprintf(
-                        "Method '%s' in class '%s' required param '%s' (%s)!",
+                        "Method '%s' in class '%s' required parameter '%s' (%s)!",
                         $reflectionMethod->getName(),
                         $reflectionClass->getName(),
                         $parameterName,
