@@ -153,7 +153,7 @@ final class Container implements ContainerInterface
             }
 
             $resolveConstructorParams = $this->resolveMethodParams(
-                $reflectionClass,
+                $className,
                 $reflectionClass->getConstructor(),
                 $constructorParams
             );
@@ -215,7 +215,7 @@ final class Container implements ContainerInterface
                     $resolveValue = $this->resolveValue($value);
 
                     if ($this->strictMode) {
-                        $this->checkPropertyType($reflectionClass, $propertyName, $propertyTypeName, $resolveValue);
+                        $this->checkPropertyType($className, $propertyName, $propertyTypeName, $resolveValue);
                     }
 
                     try {
@@ -258,7 +258,7 @@ final class Container implements ContainerInterface
                     }
 
                     $resolveMethodParams = $this->resolveMethodParams(
-                        $reflectionClass,
+                        $className,
                         $reflectionClass->getMethod($methodName),
                         $methodParams
                     );
@@ -303,7 +303,7 @@ final class Container implements ContainerInterface
     }
 
     /**
-     * @param ReflectionClass $reflectionClass
+     * @param string $className
      * @param ReflectionMethod $reflectionMethod
      * @param array $methodParams
      * @return array
@@ -311,12 +311,14 @@ final class Container implements ContainerInterface
      * @throws ContainerException
      */
     private function resolveMethodParams(
-        ReflectionClass $reflectionClass,
+        string $className,
         ReflectionMethod $reflectionMethod,
         array $methodParams
     ): array {
         $i = 0;
         $resolveMethodParams = [];
+
+        $methodName = $reflectionMethod->getName();
 
         foreach ($reflectionMethod->getParameters() as $parameter) {
             $parameterName = $parameter->getName();
@@ -327,8 +329,8 @@ final class Container implements ContainerInterface
                     sprintf(
                         "The type of parameter '%s' in method '%s' of class '%s' is not defined!",
                         $parameterName,
-                        $reflectionMethod->getName(),
-                        $reflectionClass->getName()
+                        $methodName,
+                        $className
                     ),
                     500
                 );
@@ -339,8 +341,8 @@ final class Container implements ContainerInterface
                     sprintf(
                         "Union or intersection type of parameter '%s' in method '%s' of class '%s' is not supported!",
                         $parameterName,
-                        $reflectionMethod->getName(),
-                        $reflectionClass->getName()
+                        $methodName,
+                        $className
                     ),
                     500
                 );
@@ -352,7 +354,7 @@ final class Container implements ContainerInterface
                 $resolveValue = $this->resolveValue($methodParams[$i]);
 
                 if ($this->strictMode) {
-                    $this->checkParameterType($reflectionClass, $reflectionMethod, $parameterName, $parameterTypeName, $resolveValue);
+                    $this->checkParameterType($className, $methodName, $parameterName, $parameterTypeName, $resolveValue);
                 }
 
                 $resolveMethodParams[$parameterName] = $resolveValue;
@@ -368,8 +370,8 @@ final class Container implements ContainerInterface
                 throw new ContainerException(
                     sprintf(
                         "Method '%s' in class '%s' required parameter '%s' (%s)!",
-                        $reflectionMethod->getName(),
-                        $reflectionClass->getName(),
+                        $methodName,
+                        $className,
                         $parameterName,
                         $parameterTypeName
                     ),
@@ -403,43 +405,44 @@ final class Container implements ContainerInterface
     }
 
     /**
-     * @param ReflectionClass $reflectionClass
+     * @param string $className
      * @param string $propertyName
-     * @param string $propertyTypeName
+     * @param string $propertyType
      * @param mixed $propertyValue
      * @return void
      * @throws ContainerException
      */
     private function checkPropertyType(
-        ReflectionClass $reflectionClass,
+        string $className,
         string $propertyName,
-        string $propertyTypeName,
+        string $propertyType,
         mixed $propertyValue
     ): void {
         if (is_object($propertyValue)) {
-            if (!($propertyValue instanceof $propertyTypeName)) {
+            if (!($propertyValue instanceof $propertyType)) {
                 throw new ContainerException(
                     sprintf(
                         "Property '%s' in class '%s' type error (required '%s', but given '%s')!",
                         $propertyName,
-                        $reflectionClass->getName(),
-                        $propertyTypeName,
+                        $className,
+                        $propertyType,
                         $propertyValue::class
                     ),
                     500
                 );
             }
         } else {
-            $mapPropertyType = self::$mapType[$propertyTypeName] ?? $propertyTypeName;
+            $propertyType = self::$mapType[$propertyType] ?? $propertyType;
+            $valueType = gettype($propertyValue);
 
-            if ($mapPropertyType != gettype($propertyValue)) {
+            if ($propertyType != $valueType) {
                 throw new ContainerException(
                     sprintf(
                         "Property '%s' in class '%s' type error (required '%s', but given '%s')!",
                         $propertyName,
-                        $reflectionClass->getName(),
-                        $mapPropertyType,
-                        gettype($propertyValue)
+                        $className,
+                        $propertyType,
+                        $valueType
                     ),
                     500
                 );
@@ -448,47 +451,48 @@ final class Container implements ContainerInterface
     }
 
     /**
-     * @param ReflectionClass $reflectionClass
-     * @param ReflectionMethod $reflectionMethod
+     * @param string $className
+     * @param string $methodName
      * @param string $parameterName
-     * @param string $parameterTypeName
+     * @param string $parameterType
      * @param mixed $parameterValue
      * @return void
      * @throws ContainerException
      */
     private function checkParameterType(
-        ReflectionClass $reflectionClass,
-        ReflectionMethod $reflectionMethod,
+        string $className,
+        string $methodName,
         string $parameterName,
-        string $parameterTypeName,
+        string $parameterType,
         mixed $parameterValue
     ): void {
         if (is_object($parameterValue)) {
-            if (!($parameterValue instanceof $parameterTypeName)) {
+            if (!($parameterValue instanceof $parameterType)) {
                 throw new ContainerException(
                     sprintf(
                         "Parameter '%s' in method '%s' of class '%s' type error (required '%s', but given '%s')!",
                         $parameterName,
-                        $reflectionMethod->getName(),
-                        $reflectionClass->getName(),
-                        $parameterTypeName,
+                        $methodName,
+                        $className,
+                        $parameterType,
                         $parameterValue::class
                     ),
                     500
                 );
             }
         } else {
-            $mapParameterType = self::$mapType[$parameterTypeName] ?? $parameterTypeName;
+            $parameterType = self::$mapType[$parameterType] ?? $parameterType;
+            $valueType = gettype($parameterValue);
 
-            if ($mapParameterType != gettype($parameterValue)) {
+            if ($parameterType != $valueType) {
                 throw new ContainerException(
                     sprintf(
                         "Parameter '%s' in method '%s' of class '%s' type error (required '%s', but given '%s')!",
                         $parameterName,
-                        $reflectionMethod->getName(),
-                        $reflectionClass->getName(),
-                        $mapParameterType,
-                        gettype($parameterValue)
+                        $methodName,
+                        $className,
+                        $parameterType,
+                        $valueType
                     ),
                     500
                 );
