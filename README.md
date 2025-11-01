@@ -52,6 +52,8 @@ return [
     ],
     TestController::class => [ // Full definition
         'class' => TestController::class, // Required
+
+        // Constructor injection
         '__construct()' => [ // Constructor parameters (if required)
             true, // Bool
             123, // Int
@@ -64,6 +66,8 @@ return [
                 return $container->get(StdClass::class);
             }, // Closure
         ],
+
+        // Property injection
         '$public_a' => true, // Bool
         '$public_b' => 123, // Int
         '$public_c' => 5.0, // Float
@@ -74,6 +78,8 @@ return [
         '$public_h' => fn () => function (Container $container) {
             return $container->get(StdClass::class);
         }, // Closure
+
+        // Method injection
         'setA()' => [true], // Bool
         'setB()' => [123], // Int
         'setC()' => [5.0], // Float
