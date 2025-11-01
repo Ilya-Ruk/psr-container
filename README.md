@@ -44,7 +44,9 @@ return [
     ServerRequestInterface::class => ServerRequest::class, // Simple definition
     RouterInterface::class => [ // Full definition
         'class' => Router::class, // Required
-        '__construct()' => [ // Constructor parameters (if required)
+
+        // Constructor injection
+        '__construct()' => [
             [
                 '/test' => TestController::class,
             ],
