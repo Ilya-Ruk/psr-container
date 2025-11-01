@@ -361,6 +361,10 @@ final class Container implements ContainerInterface
             } elseif ($this->has($parameterTypeName)) {
                 $resolveValue = $this->get($parameterTypeName);
 
+                if ($this->strictMode) {
+                    $this->checkParameterType($className, $methodName, $parameterName, $parameterTypeName, $resolveValue);
+                }
+
                 $resolveMethodParams[$parameterName] = $resolveValue;
             } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
                 $resolveValue = $parameter->getDefaultValue();
