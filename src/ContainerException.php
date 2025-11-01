@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Rukavishnikov\Psr\Container;
 
-use Exception;
 use Psr\Container\ContainerExceptionInterface;
+use RuntimeException;
 
-final class ContainerException extends Exception implements ContainerExceptionInterface
+class ContainerException extends RuntimeException implements ContainerExceptionInterface
 {
 }
