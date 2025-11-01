@@ -290,7 +290,7 @@ final class Container implements ContainerInterface
             } else {
                 throw new ContainerException(
                     sprintf(
-                        "Unknown param '%s' in config of class '%s'!",
+                        "Unknown parameter '%s' in config of class '%s'!",
                         $name,
                         $className
                     ),
