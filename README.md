@@ -6,11 +6,11 @@
 - Accepts array definitions
 - Supports constructor injection, property injection and method injection
 - Supports autoload of classes not specified in the container configuration
+- Supports auto-wiring
 - Supports closure
-- Auto-wiring
 - Detects circular references
-- Property type checking (default disable)
-- Method parameter type checking (default disable)
+- Checks property types (default disable)
+- Checks method parameter types (default disable)
 
 ## Requirements
 
