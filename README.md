@@ -3,13 +3,14 @@
 ## Features
 
 - [PSR-11](https://www.php-fig.org/psr/psr-11/) compatible
-- Supports constructor injection, property injection and method injection
 - Accepts array definitions
-- Supports Closure
+- Supports constructor injection, property injection and method injection
+- Supports autoload of classes not specified in the container configuration
+- Supports closure
+- Auto-wiring
 - Detects circular references
 - Property type checking (default disable)
 - Method parameter type checking (default disable)
-- Auto-wiring
 
 ## Requirements
 
@@ -32,8 +33,8 @@ $config = require 'config.php'; // Load config for container (see below)
 $container = new Container($config); // Default used
 //$container = new Container($config, true); // Strict mode used (see below)
 
-if ($container->has('InterfaceOrClass')) {
-    $instance = $container->get('InterfaceOrClass');
+if ($container->has(InterfaceOrClass::class)) {
+    $instance = $container->get(InterfaceOrClass::class);
 }
 ```
 
@@ -56,7 +57,7 @@ return [
         'class' => TestController::class, // Required
 
         // Constructor injection
-        '__construct()' => [ // Constructor parameters (if required)
+        '__construct()' => [
             true, // Bool
             123, // Int
             5.0, // Float
