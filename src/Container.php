@@ -41,7 +41,7 @@ final class Container implements ContainerInterface
     ) {
         foreach ($this->config as $key => $value) {
             if (!is_string($key)) {
-                throw new ContainerException("Key must be a string in container config!", 500);
+                throw new ContainerException("Key must be a string in container config!");
             }
         }
     }
@@ -99,11 +99,11 @@ final class Container implements ContainerInterface
             $config = [];
         } elseif (is_array($classNameOrClassConfig)) { // Class config array
             if (!array_key_exists('class', $classNameOrClassConfig)) {
-                throw new ContainerException(sprintf("Class not defined in component '%s'!", $id), 500);
+                throw new ContainerException(sprintf("Class not defined in component '%s'!", $id));
             }
 
             if (!is_string($classNameOrClassConfig['class'])) {
-                throw new ContainerException(sprintf("Class name must be a string in component '%s'!", $id), 500);
+                throw new ContainerException(sprintf("Class name must be a string in component '%s'!", $id));
             }
 
             /** @psalm-var class-string $className */
@@ -111,7 +111,7 @@ final class Container implements ContainerInterface
 
             $config = $classNameOrClassConfig;
         } else { // Component define error
-            throw new ContainerException(sprintf("Component '%s' define error!", $id), 500);
+            throw new ContainerException(sprintf("Component '%s' define error!", $id));
         }
 
         if (isset($this->building[$className])) {
@@ -120,8 +120,7 @@ final class Container implements ContainerInterface
                     "Circular reference when instantiating class '%s' ('%s')!",
                     $className,
                     implode("', '", array_keys($this->building))
-                ),
-                500
+                )
             );
         }
 
@@ -130,11 +129,11 @@ final class Container implements ContainerInterface
         try {
             $reflectionClass = new ReflectionClass($className);
         } catch (ReflectionException $e) {
-            throw new NotFoundException(sprintf("Class '%s' not found!", $className), 500, $e);
+            throw new NotFoundException(sprintf("Class '%s' not found!", $className), 0, $e);
         }
 
         if (!$reflectionClass->isInstantiable()) {
-            throw new ContainerException(sprintf("Class '%s' not instantiable!", $className), 500);
+            throw new ContainerException(sprintf("Class '%s' not instantiable!", $className));
         }
 
         $resolveConstructorParams = [];
@@ -147,8 +146,7 @@ final class Container implements ContainerInterface
                     sprintf(
                         "Constructor params must be an array in config of class '%s'!",
                         $className
-                    ),
-                    500
+                    )
                 );
             }
 
@@ -162,7 +160,7 @@ final class Container implements ContainerInterface
         try {
             $newClass = $reflectionClass->newInstanceArgs($resolveConstructorParams);
         } catch (ReflectionException $e) {
-            throw new ContainerException(sprintf("Instantiate class '%s' error!", $className), 500, $e);
+            throw new ContainerException(sprintf("Instantiate class '%s' error!", $className), 0, $e);
         } finally {
             unset($this->building[$className]);
         }
@@ -177,8 +175,7 @@ final class Container implements ContainerInterface
                     sprintf(
                         "Property name or method name must be a string in config of class '%s'!",
                         $className
-                    ),
-                    500
+                    )
                 );
             }
 
@@ -194,8 +191,7 @@ final class Container implements ContainerInterface
                                 "The type of property '%s' in class '%s' is not defined!",
                                 $propertyName,
                                 $className
-                            ),
-                            500
+                            )
                         );
                     }
 
@@ -205,8 +201,7 @@ final class Container implements ContainerInterface
                                 "Union or intersection type of property '%s' in class '%s' is not supported!",
                                 $propertyName,
                                 $className
-                            ),
-                            500
+                            )
                         );
                     }
 
@@ -227,7 +222,7 @@ final class Container implements ContainerInterface
                                 $propertyName,
                                 $className
                             ),
-                            500,
+                            0,
                             $e
                         );
                     }
@@ -237,8 +232,7 @@ final class Container implements ContainerInterface
                             "Property '%s' not defined in class '%s' or not public!",
                             $propertyName,
                             $className
-                        ),
-                        500
+                        )
                     );
                 }
             } elseif (str_ends_with($name, '()')) {
@@ -252,8 +246,7 @@ final class Container implements ContainerInterface
                             sprintf(
                                 "Method params must be an array in config of class '%s'!",
                                 $className
-                            ),
-                            500
+                            )
                         );
                     }
 
@@ -273,7 +266,7 @@ final class Container implements ContainerInterface
                                 $methodName,
                                 $className
                             ),
-                            500,
+                            0,
                             $e
                         );
                     }
@@ -283,8 +276,7 @@ final class Container implements ContainerInterface
                             "Method '%s' not defined in class '%s' or not public!",
                             $methodName,
                             $className
-                        ),
-                        500
+                        )
                     );
                 }
             } else {
@@ -293,8 +285,7 @@ final class Container implements ContainerInterface
                         "Unknown parameter '%s' in config of class '%s'!",
                         $name,
                         $className
-                    ),
-                    500
+                    )
                 );
             }
         }
@@ -331,8 +322,7 @@ final class Container implements ContainerInterface
                         $parameterName,
                         $methodName,
                         $className
-                    ),
-                    500
+                    )
                 );
             }
 
@@ -343,8 +333,7 @@ final class Container implements ContainerInterface
                         $parameterName,
                         $methodName,
                         $className
-                    ),
-                    500
+                    )
                 );
             }
 
@@ -378,8 +367,7 @@ final class Container implements ContainerInterface
                         $className,
                         $parameterName,
                         $parameterTypeName
-                    ),
-                    500
+                    )
                 );
             }
 
@@ -431,8 +419,7 @@ final class Container implements ContainerInterface
                         $className,
                         $propertyType,
                         $propertyValue::class
-                    ),
-                    500
+                    )
                 );
             }
         } else {
@@ -447,8 +434,7 @@ final class Container implements ContainerInterface
                         $className,
                         $propertyType,
                         $valueType
-                    ),
-                    500
+                    )
                 );
             }
         }
@@ -480,8 +466,7 @@ final class Container implements ContainerInterface
                         $className,
                         $parameterType,
                         $parameterValue::class
-                    ),
-                    500
+                    )
                 );
             }
         } else {
@@ -497,8 +482,7 @@ final class Container implements ContainerInterface
                         $className,
                         $parameterType,
                         $valueType
-                    ),
-                    500
+                    )
                 );
             }
         }
