@@ -138,7 +138,7 @@ final class Container implements ContainerInterface
 
         $resolveConstructorParams = [];
 
-        if ($reflectionClass->getConstructor() !== null) {
+        if (!is_null($reflectionClass->getConstructor())) {
             $constructorParams = $config['__construct()'] ?? [];
 
             if (!is_array($constructorParams)) {
